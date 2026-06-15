@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>50 Startups 多元線性迴歸分析平台 (0612更動)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #fbf9f4; /* Warm cream/paper background */
+            --bg-card: rgba(255, 255, 255, 0.94); /* Notebook paper sheets */
+            --border-card: rgba(120, 90, 50, 0.15); /* Soft wooden/leather binder border */
+            --text-primary: #1e293b; /* Dark slate text */
+            --text-secondary: #576574; /* Soft graphite pencil color */
+            --primary: #0f766e; /* Classroom blackboard green */
+            --primary-glow: rgba(15, 118, 110, 0.15);
+            --accent-emerald: #047857; /* Pen green */
+            --accent-indigo: #2563eb; /* Classic pen blue */
+            --accent-rose: #dc2626; /* Correction pen red */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            background-color: #fbf9f4;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -2;
+            background-image: url('classroom_bg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.3; /* Warm and cozy ambient background */
+            filter: saturate(1.1) contrast(0.95) brightness(1.02);
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            /* Rule line background resembling school notebooks */
+            background-image: 
+                linear-gradient(rgba(240, 233, 221, 0.5) 1px, transparent 1px);
+            background-size: 100% 28px;
+            pointer-events: none;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            text-align: center;
+            border-bottom: 3px solid rgba(139, 90, 43, 0.15); /* Soft wooden binder border */
+            background: rgba(251, 249, 244, 0.85); /* Classroom desk texture blend */
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 25px rgba(120, 90, 50, 0.06);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #0f766e, #2563eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+        }
+
+        .version-badge {
+            background: rgba(15, 118, 110, 0.08);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Tabs Navigation (School folder tabs style) */
+        .tabs {
+            display: flex;
+            background: rgba(120, 90, 50, 0.08);
+            border: 1px solid rgba(120, 90, 50, 0.18);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            padding: 0.35rem;
+            margin-bottom: 2rem;
+            gap: 0.25rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.85rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+            background: rgba(15, 118, 110, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: var(--primary);
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        /* Tab Content States */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Notebook sheet cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 16px;
+            padding: 2.2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 30px rgba(120, 90, 50, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
+            position: relative;
+            backdrop-filter: blur(6px);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 36px rgba(120, 90, 50, 0.12);
+        }
+
+        /* Notebook red line margin effect */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 2rem;
+            width: 1px;
+            background: rgba(220, 38, 38, 0.25); /* Soft notebook red line */
+            pointer-events: none;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+            padding-left: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .header-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* Stats Cards */
+        .stat-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: rgba(120, 90, 50, 0.02);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            background: rgba(15, 118, 110, 0.02);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .stat-value.optimal {
+            color: var(--accent-emerald);
+        }
+
+        .stat-value.crash {
+            color: var(--accent-rose);
+        }
+
+        /* Tables (Ruled school paper style) */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(120, 90, 50, 0.1);
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid rgba(120, 90, 50, 0.2);
+        }
+
+        tr:hover td {
+            background: rgba(120, 90, 50, 0.02);
+        }
+
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-rose);
+            background: rgba(220, 38, 38, 0.06);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid rgba(220, 38, 38, 0.1);
+        }
+
+        /* Chart Containers */
+        .chart-img-container {
+            text-align: center;
+            margin-top: 1rem;
+            background: #fbfaf6;
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--border-card);
+        }
+
+        .chart-img-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(120, 90, 50, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .chart-img-container img:hover {
+            transform: scale(1.02);
+        }
+
+        /* Academic Discussion Styling */
+        .discussion-section {
+            margin-bottom: 2rem;
+            padding-left: 1rem;
+        }
+
+        .discussion-title {
+            color: #0f766e;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .discussion-body {
+            color: var(--text-primary);
+            font-size: 1rem;
+            text-align: justify;
+        }
+
+        .discussion-body p {
+            margin-bottom: 0.75rem;
+        }
+
+        .math-block {
+            background: #fdfdfb;
+            border: 1px dashed rgba(120, 90, 50, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--accent-indigo);
+            margin: 0.5rem 0 1rem 0;
+        }
+
+        /* Interactive Calculator Styling */
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .calc-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--primary);
+            height: 6px;
+            border-radius: 5px;
+            outline: none;
+            background: rgba(120, 90, 50, 0.1);
+        }
+
+        .num-input-wrap {
+            position: relative;
+            width: 120px;
+        }
+
+        .num-input-wrap input[type="number"] {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border-card);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', inherit;
+            font-weight: bold;
+            text-align: right;
+            outline: none;
+        }
+
+        .num-input-wrap input[type="number"]:focus {
+            border-color: var(--primary);
+        }
+
+        select {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border-card);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        select:focus {
+            border-color: var(--primary);
+        }
+
+        .model-select-tabs {
+            display: flex;
+            background: rgba(120, 90, 50, 0.05);
+            border-radius: 8px;
+            padding: 0.25rem;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-card);
+        }
+
+        .model-tab {
+            flex: 1;
+            padding: 0.6rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+
+        .model-tab.active {
+            background: #ffffff;
+            border: 1px solid rgba(120, 90, 50, 0.15);
+            color: var(--primary);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        /* Prediction Display - Classroom Chalkboard style */
+        .prediction-result-panel {
+            background: #193529; /* Deep chalk green */
+            border: 10px solid #5c3a21; /* Polished walnut frame */
+            outline: 2px solid #8b5a2b; /* Inner wooden rim */
+            border-radius: 8px;
+            padding: 2.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.6), 0 12px 28px rgba(0, 0, 0, 0.25);
+            position: relative;
+        }
+
+        .prediction-result-panel::after {
+            content: '';
+            position: absolute;
+            bottom: 6px;
+            right: 15px;
+            width: 36px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.35); /* Chalk eraser block shape */
+            border-radius: 3px;
+            border-bottom: 2px solid #94a3b8;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .prediction-result-panel::before {
+            content: '✏️';
+            position: absolute;
+            bottom: 6px;
+            right: 58px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .prediction-result-panel .stat-label {
+            color: #a3b8cc;
+        }
+
+        .calc-glow-text {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #fef08a; /* Yellow chalk color */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5), 0 0 8px rgba(254, 240, 138, 0.4);
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+        }
+
+        .formula-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #f8fafc; /* White chalk color */
+            background: rgba(0, 0, 0, 0.35);
+            padding: 0.75rem;
+            border-radius: 6px;
+            width: 100%;
+            margin-top: 1rem;
+            word-break: break-all;
+            text-align: left;
+            border: 1px dashed rgba(255, 255, 255, 0.25);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+        }
+
+        /* Scrollable table container */
+        .table-scroll-container {
+            max-height: 480px;
+            overflow-y: auto;
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            margin-top: 1rem;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.02);
+            background: #ffffff;
+        }
+
+        .table-scroll-container table {
+            margin-top: 0;
+        }
+
+        .table-scroll-container th {
+            position: sticky;
+            top: 0;
+            background: #fbf9f4;
+            z-index: 10;
+            box-shadow: 0 1px 0 rgba(120, 90, 50, 0.15);
+        }
+
+        .data-filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .filter-input {
+            flex: 1;
+            padding: 0.65rem 1rem;
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            font-family: inherit;
+            outline: none;
+            background: #ffffff;
+            transition: var(--transition);
+        }
+
+        .filter-input:focus {
+            border-color: var(--primary);
+        }
+
+        .filter-select {
+            width: 180px;
+            padding: 0.65rem 1rem;
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            background: #ffffff;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .filter-select:focus {
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <div class="logo">50 Startups 多元線性迴歸分析平台</div>
+            <div>
+                <span class="version-badge">學術診斷版 (0612更動)</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Tab Buttons -->
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="switchTab(event, 'selection-experiment')">
+                📊 特徵選選實驗
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'regression-diagnostics')">
+                🔍 迴歸診斷分析
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'interactive-calc')">
+                🧮 迴歸即時預測器
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'academic-discussion')">
+                🎓 學術原理討論
+            </button>
+            <button class="tab-btn" onclick="switchTab(event, 'kaggle-dataset')">
+                📋 Kaggle 原始數據
+            </button>
+        </nav>
+
+        <!-- Tab 1: Feature Selection Experiment -->
+        <section id="selection-experiment" class="tab-content active">
+            <div class="card">
+                <h2 class="card-title">特徵組合逐步加入實驗 (Forward Selection Experiment)</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    本實驗限制使用<b>多元線性迴歸模型 (Multiple Linear Regression)</b>，透過固定隨機數切分 (random_state=1412)，依序載入 5 個不同階段的特徵組合，藉此探討自變數增加對測試集模型的效能演變：
+                </p>
+                
+                <div class="stat-group">
+                    <div class="stat-card">
+                        <div class="stat-label">階段 1 最佳單特徵 R²</div>
+                        <div class="stat-value">0.9408</div>
+                    </div>
+                    <div class="stat-card" style="border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.02);">
+                        <div class="stat-label" style="color: var(--accent-emerald)">階段 2 最佳雙特徵 R² (最優)</div>
+                        <div class="stat-value optimal">0.9476</div>
+                    </div>
+                    <div class="stat-card" style="border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.02);">
+                        <div class="stat-label" style="color: var(--accent-rose)">階段 5 全特徵 R² (崩盤)</div>
+                        <div class="stat-value crash">0.8443</div>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>階段</th>
+                            <th>特徵數量</th>
+                            <th>特徵組合</th>
+                            <th>測試集 R-squared (R²)</th>
+                            <th>測試集 RMSE (美元)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td><span class="code-font">['R&D Spend']</span></td>
+                            <td>0.9408</td>
+                            <td>$5,705.47</td>
+                        </tr>
+                        <tr style="background: rgba(16, 185, 129, 0.05); font-weight: bold;">
+                            <td>2</td>
+                            <td>2</td>
+                            <td><span class="code-font" style="color: var(--accent-emerald)">['R&D Spend', 'Marketing Spend']</span></td>
+                            <td>0.9476</td>
+                            <td>$5,367.34</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>3</td>
+                            <td><span class="code-font">['R&D Spend', 'Marketing Spend', 'New York']</span></td>
+                            <td>0.9447</td>
+                            <td>$5,515.66</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>4</td>
+                            <td><span class="code-font">['R&D Spend', 'Marketing Spend', 'New York', 'California']</span></td>
+                            <td>0.9423</td>
+                            <td>$5,633.64</td>
+                        </tr>
+                        <tr style="background: rgba(244, 63, 94, 0.05); font-weight: bold;">
+                            <td>5</td>
+                            <td>5</td>
+                            <td><span class="code-font" style="color: var(--accent-rose)">['R&D Spend', 'Marketing Spend', 'New York', 'California', 'Administration']</span></td>
+                            <td>0.8443</td>
+                            <td>$9,252.64</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h2 class="card-title">特徵數量 vs. RMSE 折線圖</h2>
+                    <div class="chart-img-container">
+                        <img src="feature_selection_experiment.png" alt="特徵選取實驗結果圖" onerror="this.src='../0612-更動/feature_selection_experiment.png'">
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 class="card-title">實驗關鍵現象解讀</h2>
+                    <div style="color: var(--text-secondary); display: flex; flex-direction: column; gap: 1rem;">
+                        <p>
+                            <strong style="color: var(--text-primary);">1. 雙特徵黃金比例：</strong><br>
+                            當模型放入 <span class="code-font">['R&D Spend', 'Marketing Spend']</span> 時，測試集 RMSE 降到最低 ($5,367)，R-squared 達到最高 (~0.95)。這表明企業的利潤增長實質上是由技術研發（創造價值）與市場行銷（實現價值）雙軌驅動的，兩個特徵均有顯著的獨立邊際解釋力。
+                        </p>
+                        <p>
+                            <strong style="color: var(--accent-rose);">2. 全特徵「過擬合崩盤」：</strong><br>
+                            當模型加載到第 5 個特徵，強行納入與利潤因果關係薄弱的行政費用（Administration）與地區虛擬變數時，預測表現慘烈崩盤：RMSE 翻倍暴增至 $9,253，R-squared 暴跌至 0.84。這在傳統統計學中是典型的小樣本（N_train=40）多特徵過擬合，模型自由度流失後開始擬合訓練集隨機噪聲的後果。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 2: Regression Diagnostics -->
+        <section id="regression-diagnostics" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">多元線性迴歸診斷表 (OLS Regression Diagnostics)</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    放入所有特徵時，透過 `statsmodels` 評估特徵的<b>偏迴歸係數顯著性 (P-value)</b> 以及<b>標準化 Beta 係數 (Standardized Beta)</b>：
+                </p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>特徵欄位</th>
+                            <th>原始迴歸係數 (B)</th>
+                            <th>標準化迴歸係數 (Beta)</th>
+                            <th>t 檢定量 (t-stat)</th>
+                            <th>顯著性 P 值 (p)</th>
+                            <th>統計學結論 (顯著水準 α = 0.05)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: rgba(16, 185, 129, 0.05); font-weight: bold;">
+                            <td>R&D Spend (研發支出)</td>
+                            <td>0.8056</td>
+                            <td>0.9183</td>
+                            <td>15.383</td>
+                            <td>0.0000</td>
+                            <td style="color: var(--accent-emerald)">★ 極度顯著 (主導利潤)</td>
+                        </tr>
+                        <tr>
+                            <td>Marketing Spend (行銷支出)</td>
+                            <td>0.0299</td>
+                            <td>0.0816</td>
+                            <td>1.346</td>
+                            <td>0.1871</td>
+                            <td>不顯著 (受多重共線性稀釋)</td>
+                        </tr>
+                        <tr>
+                            <td>Administration (行政支出)</td>
+                            <td>-0.0688</td>
+                            <td>-0.0449</td>
+                            <td>-1.133</td>
+                            <td>0.2653</td>
+                            <td>不顯著 (固定營運開支)</td>
+                        </tr>
+                        <tr>
+                            <td>State_Florida (佛州虛擬變數)</td>
+                            <td>938.7930</td>
+                            <td>0.0108</td>
+                            <td>0.241</td>
+                            <td>0.8109</td>
+                            <td>不顯著 (相對於基準加州)</td>
+                        </tr>
+                        <tr>
+                            <td>State_New York (紐約虛擬變數)</td>
+                            <td>6.9878</td>
+                            <td>0.0001</td>
+                            <td>0.002</td>
+                            <td>0.9986</td>
+                            <td>不顯著 (相對於基準加州)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h2 class="card-title">迴歸診斷指標折線圖</h2>
+                    <div class="chart-img-container">
+                        <img src="regression_diagnostic_chart.png" alt="線性迴歸診斷指標圖" onerror="this.src='../0612-更動/regression_diagnostic_chart.png'">
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 class="card-title">OLS 迴歸核心統計原理</h2>
+                    <div style="color: var(--text-secondary); display: flex; flex-direction: column; gap: 1rem;">
+                        <p>
+                            <strong>1. 標準化 Beta 係數之比較：</strong><br>
+                            自變量之間的量綱不同（研發高達數十萬，地區僅為0或1）。標準化 Beta 係數消除了量綱影響，直接反映邊際影響強度。`R&D Spend` 的 Beta 達 **0.9183**，表示其每增加1個標準差，利潤上升0.92個標準差，具絕對主導地位。
+                        </p>
+                        <p>
+                            <strong>2. 偏迴歸顯著性 P-value 檢定：</strong><br>
+                            多元迴歸計算的是「排除其他自變數影響後」的獨立邊際貢獻。除 `R&D Spend` 外，其他特徵在多元迴歸中的 P 值均大於 0.05。行銷支出雖單獨與利潤相關性高 (Corr=0.77)，但因與研發具高度<b>多重共線性</b>，其獨立邊際解釋力遭到稀釋，致使統計上不顯著。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: Interactive Calculator -->
+        <section id="interactive-calc" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">多元線性迴歸即時預測器 (Profit Predictor)</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                    切換不同迴歸模型，即時輸入變數，觀察 OLS 參數估計如何計算並決定利潤值：
+                </p>
+
+                <div class="calc-grid">
+                    <div>
+                        <div class="input-group">
+                            <label>選擇線性迴歸模型類型</label>
+                            <div class="model-select-tabs">
+                                <button class="model-tab active" onclick="switchModel(2)">黃金雙特徵模型 (R&D + Marketing)</button>
+                                <button class="model-tab" onclick="switchModel(5)">全特徵迴歸模型 (All 5 Features)</button>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="rd-input">研發支出 (R&D Spend) — USD</label>
+                            <div class="slider-container">
+                                <input type="range" id="rd-slider" min="0" max="200000" step="1000" value="100000" oninput="syncInput('rd')">
+                                <div class="num-input-wrap">
+                                    <input type="number" id="rd-num" min="0" max="200000" step="1000" value="100000" oninput="syncSlider('rd')">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="mkt-input">行銷支出 (Marketing Spend) — USD</label>
+                            <div class="slider-container">
+                                <input type="range" id="mkt-slider" min="0" max="500000" step="5000" value="250000" oninput="syncInput('mkt')">
+                                <div class="num-input-wrap">
+                                    <input type="number" id="mkt-num" min="0" max="500000" step="5000" value="250000" oninput="syncSlider('mkt')">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="full-model-extra-inputs" style="display: none; animation: fadeIn 0.3s ease;">
+                            <div class="input-group">
+                                <label for="admin-input">行政管理支出 (Administration) — USD</label>
+                                <div class="slider-container">
+                                    <input type="range" id="admin-slider" min="0" max="200000" step="1000" value="120000" oninput="syncInput('admin')">
+                                    <div class="num-input-wrap">
+                                        <input type="number" id="admin-num" min="0" max="200000" step="1000" value="120000" oninput="syncSlider('admin')">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="state-select">地理位置 (State) — 獨熱編碼對比</label>
+                                <select id="state-select" onchange="calculateProfit()">
+                                    <option value="california">加州 California (基準線 Baseline)</option>
+                                    <option value="florida">佛羅里達州 Florida (對比 California)</option>
+                                    <option value="newyork">紐約州 New York (對比 California)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="prediction-result-panel">
+                            <div class="stat-label" style="font-size: 1rem;">多元線性迴歸預測利潤</div>
+                            <div class="calc-glow-text" id="profit-display">$133,700.00</div>
+                            <div class="stat-label" style="font-size: 0.8rem; margin-top: 1rem;">OLS 數學預測方程式</div>
+                            <div class="formula-display" id="formula-display">
+                                Profit = 46923.79 + 0.7872*(R&D) + 0.0322*(Mkt)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 4: Academic Discussion -->
+        <section id="academic-discussion" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">統計學與矩陣代數原理剖析 (Academic Discussion)</h2>
+                
+                <div class="discussion-section">
+                    <h3 class="discussion-title">一、雙特徵模型優越性與因果效應</h3>
+                    <div class="discussion-body">
+                        <p>
+                            多元線性迴歸之核心目標在於建構因變數與自變數間的最優線性投影。
+                            本實驗中，`R&D Spend` 與 `Marketing Spend` 構成了最精簡且預測偏差最小的二維超平面。
+                            由產品力（研發）所累積的商品價值，與市場推廣（行銷）所產生的營收轉化，在數學上對 Profit 構成了無偏的因果預測鏈。
+                            由於兩者均與因變數存在顯著的線性因果關係，將其共同納入，能有效降低模型偏差（Bias），同時避免參數方差（Variance）在小樣本下的過度膨脹，從而在測試集上取得了最卓越的泛化效能。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="discussion-section">
+                    <h3 class="discussion-title">二、高維度模型「崩盤」與自由度流失的數學解釋</h3>
+                    <div class="discussion-body">
+                        <p>
+                            當特徵數量增加至 5 個時，測試集效能急遽惡化（$R^2$ 跌破 0.90，RMSE 呈懸崖式增長）。其背後的數理原因如下：
+                        </p>
+                        <p>
+                            <strong>1. 殘差自由度流失：</strong><br>
+                            在訓練樣本量極小（$N_{\text{train}}=40$）的情況下，OLS 估計的自由度為 $df = N - p - 1$。
+                            當自變數 $p$ 增加時，自由度迅速萎縮。過少的樣本去估計過多的自變數權重，將導致參數估計矩陣的不確定性（方差）呈幾何級數增加。
+                        </p>
+                        <p>
+                            <strong>2. OLS 對殘差平方和 (SSR) 最小化的代價：</strong><br>
+                            多元線性迴歸的數學原理為：
+                            $$\min_{\mathbf{w}} \sum_{i=1}^{N_{\text{train}}} (y_i - \mathbf{x}_i^T\mathbf{w})^2$$
+                            即使加入的變數（如行政費用、地區）在總體分布中與獲利毫無因果關係，普通最小平方法（OLS）為了保證訓練集誤差最小化，**會強制使用這些無效特徵的係數 $w_j$ 去強行適應、擬合訓練樣本中的隨機干擾噪聲 $\epsilon_i$**。這會造成模型過度擬合特定的訓練數據，致使其引進高額變異數，在未知的測試集上遭受嚴重預測崩盤。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="discussion-section">
+                    <h3 class="discussion-title">三、OLS 無懲罰機制與雜訊權重分配</h3>
+                    <div class="discussion-body">
+                        <p>
+                            在經典線性迴歸解析解 $\hat{\mathbf{w}} = (\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}^T\mathbf{y}$ 中：
+                        </p>
+                        <p>
+                            <strong>1. 無收縮機制（No shrinkage）：</strong><br>
+                            由於不具備正則化懲罰項（Lasso 的 L1 或 Ridge 的 L2 懲罰），對於顯著性極低的特徵（如行政費用 $p > 0.25$、地區虛擬變數 $p > 0.80$），OLS **無法將其係數壓縮為零**，而是不得不強行分配非零權重 $w_j \neq 0$ 以滿足最小化訓練集 SSR。這直接將抽樣隨機誤差（Sampling Noise）轉化成了模型的系統性干擾。
+                        </p>
+                        <p>
+                            <strong>2. 虛擬變數陷阱的防範：</strong><br>
+                            類別特徵經 One-Hot Encoding 後轉為虛擬二元變數。為防止完全多重共線性造成的共線性矩陣不可逆（虛擬變數陷阱 Dummy Variable Trap），我們必須剔除一個州（California）作為 Baseline。雖然這防止了完全共線性，但在小樣本訓練集下，地區的微小隨機擾動仍會導致虛擬變數被分配到錯誤的偏誤權重，從而在測試集中引發噪聲加載，導致整體預測失敗。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 5: Kaggle Raw Dataset -->
+        <section id="kaggle-dataset" class="tab-content">
+            <div class="card">
+                <h2 class="card-title">Kaggle 50 Startups 原始數據集 (50 Startups Raw Dataset)</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    以下為 Kaggle 50 Startups 的原始數據明細，包含 50 家新創公司的研發、行政、行銷支出、所在地區與最終利潤（數據已按獲利從高到低排序）。您可利用篩選工具即時查詢特定資料：
+                </p>
+
+                <!-- Search & filter bar -->
+                <div class="data-filter-bar">
+                    <input type="text" id="data-search" class="filter-input" placeholder="🔍 搜尋特定數值或地區..." oninput="filterRawData()">
+                    <select id="data-state-filter" class="filter-select" onchange="filterRawData()">
+                        <option value="all">📍 所有地區 (All States)</option>
+                        <option value="New York">New York</option>
+                        <option value="California">California</option>
+                        <option value="Florida">Florida</option>
+                    </select>
+                </div>
+
+                <!-- Scrollable Table -->
+                <div class="table-scroll-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="text-align: center; width: 80px;">編號 (ID)</th>
+                                <th style="text-align: right;">研發支出 (R&D Spend)</th>
+                                <th style="text-align: right;">行政支出 (Administration)</th>
+                                <th style="text-align: right;">行銷支出 (Marketing Spend)</th>
+                                <th style="text-align: center; width: 120px;">所在地區 (State)</th>
+                                <th style="text-align: right; width: 160px;">獲利利潤 (Profit)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="raw-data-tbody">
+                            <!-- Populated dynamically by javascript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let currentModel = 2; // 2 for optimal, 5 for full
+
+        // Kaggle 50 Startups Raw Dataset
+        const rawData = [
+            {id: 1, rd: 165349.20, admin: 136897.80, mkt: 471784.10, state: "New York", profit: 192261.83},
+            {id: 2, rd: 162597.70, admin: 151377.59, mkt: 443898.53, state: "California", profit: 191792.06},
+            {id: 3, rd: 153441.51, admin: 101145.55, mkt: 407934.54, state: "Florida", profit: 191050.39},
+            {id: 4, rd: 144372.41, admin: 118671.85, mkt: 383199.62, state: "New York", profit: 182901.99},
+            {id: 5, rd: 142107.34, admin: 91391.77, mkt: 366168.42, state: "Florida", profit: 166187.94},
+            {id: 6, rd: 131876.90, admin: 99814.71, mkt: 362861.36, state: "New York", profit: 156991.12},
+            {id: 7, rd: 134615.46, admin: 147198.87, mkt: 127716.82, state: "California", profit: 156122.51},
+            {id: 8, rd: 130298.13, admin: 145530.06, mkt: 323876.68, state: "Florida", profit: 155752.60},
+            {id: 9, rd: 120542.52, admin: 148718.95, mkt: 311613.29, state: "New York", profit: 152211.77},
+            {id: 10, rd: 123334.88, admin: 108679.17, mkt: 304981.62, state: "California", profit: 149759.96},
+            {id: 11, rd: 101913.08, admin: 110594.11, mkt: 229160.95, state: "Florida", profit: 146121.95},
+            {id: 12, rd: 100671.96, admin: 91790.61, mkt: 249744.55, state: "California", profit: 144259.40},
+            {id: 13, rd: 93863.75, admin: 127320.38, mkt: 249839.44, state: "Florida", profit: 141585.52},
+            {id: 14, rd: 91992.39, admin: 135495.07, mkt: 252664.93, state: "California", profit: 134307.35},
+            {id: 15, rd: 119943.24, admin: 156547.42, mkt: 256512.92, state: "Florida", profit: 132602.65},
+            {id: 16, rd: 114523.61, admin: 122616.84, mkt: 261776.23, state: "New York", profit: 129917.04},
+            {id: 17, rd: 78013.11, admin: 121597.55, mkt: 264346.06, state: "California", profit: 126992.93},
+            {id: 18, rd: 94657.16, admin: 145077.58, mkt: 282574.31, state: "New York", profit: 125370.37},
+            {id: 19, rd: 91749.16, admin: 114175.79, mkt: 294919.57, state: "Florida", profit: 124266.90},
+            {id: 20, rd: 86419.70, admin: 153514.11, mkt: 0.00, state: "New York", profit: 122776.86},
+            {id: 21, rd: 76253.86, admin: 113867.30, mkt: 298664.47, state: "California", profit: 118474.03},
+            {id: 22, rd: 78389.47, admin: 153773.43, mkt: 299737.29, state: "New York", profit: 111313.02},
+            {id: 23, rd: 73994.56, admin: 122782.75, mkt: 303319.26, state: "Florida", profit: 110352.25},
+            {id: 24, rd: 67532.53, admin: 105751.03, mkt: 304768.73, state: "Florida", profit: 108733.99},
+            {id: 25, rd: 77044.01, admin: 99281.34, mkt: 140574.81, state: "New York", profit: 108552.04},
+            {id: 26, rd: 64664.71, admin: 139553.16, mkt: 137962.62, state: "California", profit: 107404.34},
+            {id: 27, rd: 75328.87, admin: 144135.98, mkt: 134050.07, state: "Florida", profit: 105733.54},
+            {id: 28, rd: 72107.60, admin: 127864.55, mkt: 353183.81, state: "New York", profit: 105008.31},
+            {id: 29, rd: 66051.52, admin: 182645.56, mkt: 118148.20, state: "Florida", profit: 103282.38},
+            {id: 30, rd: 65605.48, admin: 153032.06, mkt: 107138.38, state: "New York", profit: 101004.64},
+            {id: 31, rd: 61994.48, admin: 115641.28, mkt: 91131.24, state: "Florida", profit: 99937.59},
+            {id: 32, rd: 61136.38, admin: 152701.92, mkt: 88218.23, state: "New York", profit: 97483.56},
+            {id: 33, rd: 63408.86, admin: 129219.61, mkt: 46085.25, state: "California", profit: 97427.84},
+            {id: 34, rd: 55493.95, admin: 103057.49, mkt: 214634.81, state: "Florida", profit: 96778.92},
+            {id: 35, rd: 46426.07, admin: 157693.92, mkt: 210797.67, state: "California", profit: 96712.80},
+            {id: 36, rd: 46014.02, admin: 85047.44, mkt: 205517.64, state: "New York", profit: 96479.51},
+            {id: 37, rd: 28663.76, admin: 127056.21, mkt: 201126.82, state: "Florida", profit: 90708.19},
+            {id: 38, rd: 44069.95, admin: 51283.14, mkt: 197029.42, state: "California", profit: 89949.14},
+            {id: 39, rd: 20229.59, admin: 65947.93, mkt: 185265.10, state: "New York", profit: 81229.06},
+            {id: 40, rd: 38558.51, admin: 82982.09, mkt: 174999.30, state: "California", profit: 81005.76},
+            {id: 41, rd: 28754.33, admin: 118546.05, mkt: 172795.67, state: "California", profit: 78239.91},
+            {id: 42, rd: 27892.92, admin: 84710.77, mkt: 164470.71, state: "Florida", profit: 77798.83},
+            {id: 43, rd: 23640.93, admin: 96189.63, mkt: 148001.11, state: "California", profit: 71498.49},
+            {id: 44, rd: 15505.73, admin: 127382.30, mkt: 35534.17, state: "New York", profit: 69758.98},
+            {id: 45, rd: 22177.74, admin: 154806.14, mkt: 28334.72, state: "California", profit: 65200.33},
+            {id: 46, rd: 1000.23, admin: 124153.04, mkt: 1903.93, state: "New York", profit: 64926.08},
+            {id: 47, rd: 1315.46, admin: 115816.21, mkt: 297114.46, state: "Florida", profit: 49490.75},
+            {id: 48, rd: 0.00, admin: 135426.92, mkt: 0.00, state: "California", profit: 42559.73},
+            {id: 49, rd: 542.05, admin: 51743.15, mkt: 0.00, state: "New York", profit: 35673.41},
+            {id: 50, rd: 0.00, admin: 116983.80, mkt: 45173.06, state: "California", profit: 14681.40}
+        ];
+
+        // Filter Raw Data Table
+        function filterRawData() {
+            const query = document.getElementById('data-search').value.toLowerCase();
+            const stateFilter = document.getElementById('data-state-filter').value;
+            const tbody = document.getElementById('raw-data-tbody');
+            
+            tbody.innerHTML = '';
+            
+            const filtered = rawData.filter(row => {
+                const matchState = (stateFilter === 'all' || row.state === stateFilter);
+                const matchText = (
+                    row.state.toLowerCase().includes(query) ||
+                    row.rd.toString().includes(query) ||
+                    row.admin.toString().includes(query) ||
+                    row.mkt.toString().includes(query) ||
+                    row.profit.toString().includes(query)
+                );
+                return matchState && matchText;
+            });
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem;">沒有符合條件的數據</td></tr>`;
+                return;
+            }
+            
+            filtered.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="code-font" style="color: var(--text-secondary); text-align: center;">#${row.id}</td>
+                    <td style="font-family: 'JetBrains Mono', monospace; text-align: right;">$${row.rd.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td style="font-family: 'JetBrains Mono', monospace; text-align: right;">$${row.admin.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td style="font-family: 'JetBrains Mono', monospace; text-align: right;">$${row.mkt.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td style="text-align: center; font-weight: 600;">${row.state}</td>
+                    <td style="font-family: 'JetBrains Mono', monospace; text-align: right; font-weight: bold; color: var(--primary);">$${row.profit.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Tab Switching
+        function switchTab(evt, tabId) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(button => button.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        // Calculator Controls
+        function syncInput(prefix) {
+            const slider = document.getElementById(prefix + '-slider');
+            const num = document.getElementById(prefix + '-num');
+            num.value = slider.value;
+            calculateProfit();
+        }
+
+        function syncSlider(prefix) {
+            const slider = document.getElementById(prefix + '-slider');
+            const num = document.getElementById(prefix + '-num');
+            
+            // Limit values
+            let val = parseFloat(num.value) || 0;
+            const maxVal = parseFloat(slider.max);
+            const minVal = parseFloat(slider.min);
+            if (val > maxVal) val = maxVal;
+            if (val < minVal) val = minVal;
+            
+            num.value = val;
+            slider.value = val;
+            calculateProfit();
+        }
+
+        function switchModel(modelType) {
+            currentModel = modelType;
+            
+            const tabs = document.querySelectorAll('.model-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            if (modelType === 2) {
+                tabs[0].classList.add('active');
+                document.getElementById('full-model-extra-inputs').style.display = 'none';
+                document.getElementById('formula-display').innerText = "Profit = 46923.79 + 0.7872*(R&D Spend) + 0.0322*(Marketing Spend)";
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('full-model-extra-inputs').style.display = 'block';
+                document.getElementById('formula-display').innerText = "Profit = 54030.04 + 0.8056*(R&D) - 0.0688*(Admin) + 0.0299*(Mkt) + 938.79*(State_FL) + 6.99*(State_NY)";
+            }
+            calculateProfit();
+        }
+
+        // Calculator Logic
+        function calculateProfit() {
+            const rd = parseFloat(document.getElementById('rd-num').value) || 0;
+            const mkt = parseFloat(document.getElementById('mkt-num').value) || 0;
+            
+            let profit = 0;
+            
+            if (currentModel === 2) {
+                // Optimal Model Equation: Profit = 46923.79 + 0.7872 * R&D + 0.0322 * Marketing
+                profit = 46923.79 + (0.7872 * rd) + (0.0322 * mkt);
+            } else {
+                // Full Model Equation: Profit = 54030.04 + 0.8056*R&D - 0.0688*Admin + 0.0299*Mkt + 938.79*FL + 6.99*NY
+                const admin = parseFloat(document.getElementById('admin-num').value) || 0;
+                const state = document.getElementById('state-select').value;
+                
+                let stateFL = 0;
+                let stateNY = 0;
+                if (state === 'florida') stateFL = 1;
+                if (state === 'newyork') stateNY = 1;
+                
+                profit = 54030.04 + (0.8056 * rd) - (0.0688 * admin) + (0.0299 * mkt) + (938.7930 * stateFL) + (6.9878 * stateNY);
+            }
+            
+            // Format number to currency
+            document.getElementById('profit-display').innerText = '$' + profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // Initialize prediction calculation and raw dataset table
+        window.onload = function() {
+            calculateProfit();
+            filterRawData();
+        };
+    </script>
+</body>
+</html>
