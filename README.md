@@ -27,7 +27,27 @@
 
 ## 🎨 快速體驗：開啟互動式網頁儀表板 (index.html)
 
-您可以直接點擊或在瀏覽器中開啟 [index.html](file:///d:/20260611-HW6-Bussiness-prediction-lesson-main/20260611-HW6-Bussiness-prediction-lesson-main/index.html) 來體驗我們為您設計的學術診斷平台與黑板即時預測計算器！
+由於 GitHub 預設只會將 `index.html` 視為程式原始碼進行展示（直接點擊會進入程式碼編輯/檢視介面），無法直接在瀏覽器執行網頁，您可以選擇以下三種方式開啟本平台：
+
+### 🌐 方式 A：開啟 GitHub Pages 線上預覽版 (推薦 ✨)
+您可以啟用 GitHub Pages 服務，將本倉庫轉為靜態網頁展示：
+1. 請點擊進入您的 GitHub 專案首頁。
+2. 點擊右上角 **Settings** ➔ 左側選單 **Pages**。
+3. 在 **Build and deployment** 下方的 **Branch**，選擇 `main`，並將資料夾保持為 `/ (root)`，點擊 **Save**。
+4. 稍等 1 分鐘後，即可透過以下官方網址直接在線上操作互動式儀表板：
+   👉 **[GitHub Pages 部署網址](https://mrhuang55-creator.github.io/20260611-HW6-Bussiness-prediction-lesson/)**
+
+---
+
+### 💻 方式 B：下載至本機執行 (最穩定 🚀)
+1. 將專案 Clone 或下載 ZIP 壓縮檔至您的本機電腦並解壓縮。
+2. 直接雙擊或以任意瀏覽器開啟本機專案目錄下的 [index.html](index.html) 即可正常運行所有功能！
+
+---
+
+### 🔗 方式 C：使用 HTML 免費線上預覽服務
+若您不想進行任何設定，也可以直接點擊以下第三方預覽連結來即時渲染網頁：
+👉 **[HTML Preview 線上即時預覽](https://htmlpreview.github.io/?https://github.com/mrhuang55-creator/20260611-HW6-Bussiness-prediction-lesson/blob/main/index.html)**
 
 ---
 
